@@ -8,7 +8,6 @@ class Minesweeper:
     """
 
     def __init__(self, height=8, width=8, mines=8):
-
         # Set initial width, height, and number of mines
         self.height = height
         self.width = width
@@ -65,7 +64,6 @@ class Minesweeper:
         # Loop over all cells within one row and column
         for i in range(cell[0] - 1, cell[0] + 2):
             for j in range(cell[1] - 1, cell[1] + 2):
-
                 # Ignore the cell itself
                 if (i, j) == cell:
                     continue
@@ -127,8 +125,8 @@ class Sentence:
         if cell in self.cells:
             self.cells.remove(cell)
             self.count -= 1
-        else:
-            pass
+
+        return
 
     def mark_safe(self, cell):
         """
@@ -137,8 +135,6 @@ class Sentence:
         """
         if cell in self.cells:
             self.cells.remove(cell)
-        else:
-            pass
 
 
 class MinesweeperAI:
@@ -147,7 +143,6 @@ class MinesweeperAI:
     """
 
     def __init__(self, height=8, width=8):
-
         # Set initial height and width
         self.height = height
         self.width = width
@@ -180,6 +175,19 @@ class MinesweeperAI:
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
+    def mark_neighboring_cell(self):
+        """
+        Check new cells for current safes and mines based on knowledge database
+        """
+        for sentence in self.knowledge:
+            known_safes_sentence = sentence.known_safes().copy()
+            known_mines_sentence = sentence.known_mines().copy()
+            for cell in known_safes_sentence.union(known_mines_sentence):
+                if cell in known_safes_sentence:
+                    self.mark_safe(cell)
+                else:
+                    self.mark_mine(cell)
+
     def add_knowledge(self, cell, count):
         """
         Called when the Minesweeper board tells us, for a given
@@ -199,57 +207,41 @@ class MinesweeperAI:
         self.moves_made.add(cell)
 
         # 2
-        self.safes.add(cell)
+        self.mark_safe(cell)
 
         # 3
 
         # Loop over all cells within one row and column
 
-        undetermined = []
-        count_mines = 0
+        undetermined = set()
 
         # Loop over all cells within one row and column
         for i in range(cell[0] - 1, cell[0] + 2):
             for j in range(cell[1] - 1, cell[1] + 2):
-
                 # Ignore the cell itself
-                if (i, j) == cell:
+                if (i, j) == cell or (i, j) in self.safes:
                     continue
 
                 if (i, j) in self.mines:
-                    count += 1
+                    count -= 1
 
                 if (
-                    0 <= i <= self.height
-                    and 0 <= j <= self.height
-                    and (i, j) not in self.moves_made
+                    0 <= i < self.height
+                    and 0 <= j < self.width
                     and (i, j) not in self.mines
                 ):
-                    undetermined.append((i, j))
+                    undetermined.add((i, j))
+                    print(undetermined)
 
-        # 4
-        new_sentence = Sentence(undetermined, count - count_mines)
+        new_sentence = Sentence(undetermined, count)
 
         self.knowledge.append(new_sentence)
 
+        # 4
+
+        self.mark_neighboring_cell()
+
         # 5
-
-        for sentence in self.knowledge:
-
-            if sentence.known_mines():
-
-                known_mines_sentence = sentence.known_mines().copy()
-
-                for cell in known_mines_sentence:
-                    self.mark_mine(cell)
-
-            if sentence.known_safes():
-
-                known_safes_sentence = sentence.known_safes().copy()
-
-                for cell in known_safes_sentence:
-                    self.mark_safe(cell)
-
         for sentence in self.knowledge:
             if (
                 new_sentence.cells.issubset(sentence.cells)
@@ -257,11 +249,8 @@ class MinesweeperAI:
                 and new_sentence.count > 0
                 and new_sentence != sentence
             ):
-                new_sub = sentence.cells.difference(new_sentence.cells)
-                new_sentence_sub = Sentence(
-                    list(new_sub), sentence.count - new_sentence.count
-                )
-                self.knowledge.append(new_sentence_sub)
+                difference = sentence.cells.difference(new_sentence.cells)
+                self.knowledge.append(Sentence(difference, sentence.count - new_sentence.count))
 
     def make_safe_move(self):
         """
@@ -274,7 +263,7 @@ class MinesweeperAI:
         """
 
         safe_moves = self.safes - self.moves_made
-        
+
         if safe_moves:
             return random.choice(list(safe_moves))
         return None
@@ -290,7 +279,6 @@ class MinesweeperAI:
 
         for i in range(self.height):
             for j in range(self.width):
-
                 cell = (i, j)
 
                 if cell not in self.moves_made and cell not in self.mines:
