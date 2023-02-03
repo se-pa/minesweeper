@@ -229,36 +229,40 @@ class MinesweeperAI:
 
         # 4
         new_sentence = Sentence(undetermined, count - count_mines)
-        
+
         self.knowledge.append(new_sentence)
-        
+
         # 5
-        
+
         for sentence in self.knowledge:
-            
-            
+
             if sentence.known_mines():
-                
+
                 known_mines_sentence = sentence.known_mines().copy()
-                
+
                 for cell in known_mines_sentence:
                     self.mark_mine(cell)
-                    
-                    
+
             if sentence.known_safes():
-                
+
                 known_safes_sentence = sentence.known_safes().copy()
 
                 for cell in known_safes_sentence:
                     self.mark_safe(cell)
-                    
-                    
+
         for sentence in self.knowledge:
-            if new_sentence.cells.issubset(sentence.cells) and self.count > 0 and new_sentence.count > 0 and new_sentence != sentence:
+            if (
+                new_sentence.cells.issubset(sentence.cells)
+                and sentence.count > 0
+                and new_sentence.count > 0
+                and new_sentence != sentence
+            ):
                 new_sub = sentence.cells.difference(new_sentence.cells)
-                new_sentence_sub = Sentence(list(new_sub), sentence.count - new_sentence.count)
+                new_sentence_sub = Sentence(
+                    list(new_sub), sentence.count - new_sentence.count
+                )
                 self.knowledge.append(new_sentence_sub)
-        
+
     def make_safe_move(self):
         """
         Returns a safe cell to choose on the Minesweeper board.
@@ -269,10 +273,10 @@ class MinesweeperAI:
         and self.moves_made, but should not modify any of those values.
         """
 
-        for cell in self.safes:
-            if cell not in self.moves_made:
-                return cell
-
+        safe_moves = self.safes - self.moves_made
+        
+        if safe_moves:
+            return random.choice(list(safe_moves))
         return None
 
     def make_random_move(self):

@@ -76,7 +76,7 @@ while True:
         for i, rule in enumerate(rules):
             line = smallFont.render(rule, True, WHITE)
             lineRect = line.get_rect()
-            lineRect.center = ((width / 2), 150 + 30 * i)
+            lineRect.center = ((width / 2), 150 + 30 * i) 
             screen.blit(line, lineRect)
 
         # Play game button
